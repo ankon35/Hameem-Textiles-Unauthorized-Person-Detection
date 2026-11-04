@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="live">
+  <section class="feed">
+    <div id="banner" class="banner hidden">UNAUTHORIZED PERSON DETECTED</div>
+    <img src="{{ url_for('video_feed') }}" alt="Live camera">
+  </section>
+
+  <aside class="panel">
+    <h2>Status</h2>
+    <div class="stat"><span>Camera</span><b id="state">...</b></div>
+    <div class="stat"><span>FPS</span><b id="fps">0</b></div>
+    <div class="stat"><span>Registered people</span><b>{{ people }}</b></div>
+    <div class="stat"><span>Alerts this session</span><b id="nalerts">0</b></div>
+
+    <h2>In view</h2>
+    <ul id="faces" class="faces"><li class="muted">No face</li></ul>
+
+    <h2>Settings</h2>
+    <label class="slider">
+      Threshold <b id="thrv">{{ '%.2f' % threshold }}</b>
+      <input id="thr" type="range" min="0.30" max="0.90" step="0.01" value="{{ threshold }}">
+      <small>Higher = stricter. Known people may be flagged more often.</small>
+    </label>
+    <button id="pause" class="btn">Pause camera</button>
+    {% if people == 0 %}
+      <p class="warn">No one is registered yet. Everyone will show as unauthorized.
+        <a href="{{ url_for('people') }}">Add people</a></p>
+    {% endif %}
+  </aside>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+let paused = false;
+
+async function poll() {
+  try {
+    const s = await (await fetch('/api/status')).json();
+    $('state').textContent = s.state;
+    $('fps').textContent = s.fps;
+    $('nalerts').textContent = s.session_alerts;
+    $('banner').classList.toggle('hidden', !s.alert);
+    const ul = $('faces');
+    ul.innerHTML = s.faces.length ? '' : '<li class="muted">No face</li>';
+    for (const f of s.faces) {
+      const li = document.createElement('li');
+      li.className = f.name ? 'ok' : 'bad';
+      li.textContent = (f.name || 'UNAUTHORIZED') + '  ' + f.score.toFixed(2);
+      ul.appendChild(li);
+    }
+  } catch (e) { $('state').textContent = 'server offline'; }
+}
+setInterval(poll, 700); poll();
+
+async function send(body) {
+  return (await fetch('/api/settings', {method: 'POST',
+    headers: {'Content-Type': 'application/json'}, body: JSON.stringify(body)})).json();
+}
+$('thr').addEventListener('input', e => $('thrv').textContent = (+e.target.value).toFixed(2));
+$('thr').addEventListener('change', e => send({threshold: +e.target.value}));
+$('pause').addEventListener('click', async () => {
+  paused = !paused;
+  await send({paused});
+  $('pause').textContent = paused ? 'Resume camera' : 'Pause camera';
+});
+</script>
+{% endblock %}

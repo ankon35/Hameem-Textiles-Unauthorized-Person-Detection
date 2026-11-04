@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="card">
+  <h2>Add an authorized person</h2>
+  <form method="post" enctype="multipart/form-data" class="add">
+    <input name="name" placeholder="Name, e.g. Ankon" required>
+    <input name="photos" type="file" accept="image/*" multiple required>
+    <button class="btn primary">Add</button>
+  </form>
+  <small class="muted">Upload 5 to 20 clear photos with one face each. Different angles and light work best.
+    To add more photos for someone, use the same name again.</small>
+</section>
+
+<section class="card">
+  <div class="row">
+    <h2>Registered people ({{ people|length }})</h2>
+    <form method="post" action="{{ url_for('rebuild') }}">
+      <button class="btn" title="Recompute all embeddings from labels.csv">Rebuild from CSV</button>
+    </form>
+  </div>
+  {% if not people %}
+    <p class="muted">Nobody yet.</p>
+  {% endif %}
+  <div class="grid">
+    {% for name, info in people.items() %}
+    <div class="person">
+      {% if info.thumb %}
+        <img src="{{ url_for('person_image', fname=info.thumb.split('/', 1)[1]) }}" alt="{{ name }}">
+      {% else %}<div class="noimg">?</div>{% endif %}
+      <b>{{ name }}</b>
+      <small>{{ info.faces }} face(s) of {{ info.images }} photo(s)</small>
+      <form method="post" action="{{ url_for('delete_person') }}"
+            onsubmit="return confirm('Remove {{ name }} and their photos?')">
+        <input type="hidden" name="name" value="{{ name }}">
+        <button class="btn danger">Remove</button>
+      </form>
+    </div>
+    {% endfor %}
+  </div>
+</section>
+{% endblock %}

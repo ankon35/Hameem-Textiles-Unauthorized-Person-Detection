@@ -1,0 +1,17 @@
+flask
+opencv-python
+numpy
+pillow
+requests
+tqdm
+# torch and torchvision: install from https://pytorch.org (CPU or CUDA build)
+# facenet-pytorch: pip install facenet-pytorch --no-deps
+
+
+cd face_web
+python -m venv venv
+venv\Scripts\activate
+pip install torch torchvision
+pip install -r requirements.txt
+pip install facenet-pytorch --no-deps
+python app.py

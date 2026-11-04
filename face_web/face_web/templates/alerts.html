@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="card">
+  <div class="row">
+    <h2>{{ 'All alerts' if show_all else 'Alerts this session' }} ({{ alerts|length }})</h2>
+    {% if show_all %}
+      <a class="btn" href="{{ url_for('alerts') }}">This session only</a>
+    {% else %}
+      <a class="btn" href="{{ url_for('alerts', all=1) }}">Show all</a>
+    {% endif %}
+  </div>
+  {% if not alerts %}<p class="muted">No alerts yet.</p>{% endif %}
+  <div class="grid wide">
+    {% for a in alerts %}
+    <a class="alert" href="{{ url_for('alert_image', fname=a.file) }}" target="_blank">
+      <img src="{{ url_for('alert_image', fname=a.file) }}" loading="lazy" alt="alert">
+      <span>{{ a.time }}</span>
+    </a>
+    {% endfor %}
+  </div>
+</section>
+<script>
+  // refresh every 5 s to pick up new alerts
+  setTimeout(() => location.reload(), 5000);
+</script>
+{% endblock %}
